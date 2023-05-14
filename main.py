@@ -3,7 +3,6 @@
 from tkinter import *
 import configparser as con
 import os
-import fx
 from tkinter import messagebox
 import sys
 from datetime import datetime
