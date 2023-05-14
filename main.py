@@ -1,4 +1,5 @@
 #!encoding=utf-8
+# 导入 GUI，时间计算，系统函数等库
 from tkinter import *
 import configparser as con
 import os
@@ -8,20 +9,22 @@ import sys
 from datetime import datetime
 
 
+# Pyinstall打包时的绝对路径
 def app_path():
     if hasattr(sys, 'frozen'):
         return os.path.dirname(sys.executable)  # 使用pyinstaller打包后的exe目录
     return os.path.dirname(__file__)  # 没打包前的py目录
 
 
+# 导入config库
 config = con.ConfigParser()
 
+#读取目录下的config
 curPath = os.path.dirname(os.path.realpath(__file__))
 path = os.path.join(curPath, r'config.ini')
-# pathText = os.path.join(curPath, r'Text.txt')
-# print(path)
 config.read(filenames=path, encoding='utf-8')
 
+# 以下为取消自带的应用窗口，把不必要的背景转为透明，并且增加移动函数
 lastClickX = 0
 lastClickY = 0
 
@@ -37,28 +40,36 @@ def Dragging(event):
     window.geometry("+%s+%s" % (x, y))
 
 
+# 关闭软件
 def tick():
-    os.system("taskkill /f /im 中考倒计时.exe")
+    import subprocess
+    cmd = 'taskkill /f /im 中考倒计时.exe'
+    res = subprocess.call(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     exit()
 
 
-# with open(pathText, 'r', encoding='utf-8') as file:
-#    outputText = file.read().format('\n', '\n', str(getDay()), '\n')
-#    file.close()
-
-
-tD = datetime(year=2023, month=6, day=13, hour=8) - datetime.today()
-tD = str(tD.days)
+# 读取需要的参数
 screenSize = config['section']['screenSize']  # "310x300+400+00"
 wordStyle = config['section']['wordStyle']  # 黑体"
 wordSize = int(config['section']['wordSize'])  # 40
 buttonWordStyle = config['section']['buttonWordStyle']  # "黑体"
 buttonWordSize = int(config['section']['buttonWordSize'])  # 20
+targetDay = int(config['section']['targetDay'])
+targetMonth = int(config['section']['targetMonth'])
+targetYear = int(config['section']['targetYear'])
+targetHour = int(config['section']['targetHour'])
+showSeconds = eval(config['section']['showSeconds'])
+showExitButton = eval(config['section']['showExitButton'])
+showMessage = eval(config['section']['showMessage'])
+tD = datetime(year=targetYear, month=targetMonth, day=targetDay, hour=targetHour) - datetime.today()
+tD = str(tD.days)
 
+#建立窗口
 window = Tk()
 outputText = StringVar()
 
 
+# 时间计算
 def showtime():
     tM = 60 - datetime.today().minute
     tS = 60 - datetime.today().second
@@ -66,22 +77,34 @@ def showtime():
         tH = 24 - datetime.today().hour + 8
     else:
         tH = 8 - datetime.today().hour
-    outputText.set("距离中考\n还有\n{}\n天\n{}时{}分{}秒".format(tD, str(tH), str(tM), str(tS)))
-    window.after(1000, showtime)
+    if showSeconds:
+        outputText.set("距离中考\n还有\n{}\n天\n{}时{}分{}秒".format(tD, str(tH), str(tM), str(tS)))
+        window.after(1000, showtime)
+    else:
+        outputText.set("距离中考\n还有\n{}\n天".format(tD))
 
 
+# 显示文字
 showtime()
 window.config(bg='white')
 window.wm_attributes('-transparentcolor', 'white', '-topmost', '0')
 window.overrideredirect(True)
 window.wm_attributes('-topmost', False)
 window.geometry(screenSize)
-messagebox.showinfo(title='信息', message="本软件由樱花落制作\n全部代码已经在github上开源")
+
+
+if showMessage:
+    messagebox.showinfo(title='信息', message="本软件由樱花落制作\n全部代码已经在github上开源")
+
+
 window.bind('<Button-1>', SaveLastClickPos)
 window.bind('<B1-Motion>', Dragging)
 lb = Label(window, textvariable=outputText, font=(wordStyle, wordSize), bg='white', fg='#FFFFF0')
-# lb.master.attributes('-transparentcolor', 'white')
 lb.pack()
-Button(window, text='退出', command=tick, font=(buttonWordStyle, buttonWordSize)).pack()
-# window.attributes('-alpha', 0.1)
+
+
+if showExitButton:
+    Button(window, text='退出', command=tick, font=(buttonWordStyle, buttonWordSize)).pack()
+
+
 window.mainloop()
