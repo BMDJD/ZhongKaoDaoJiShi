@@ -18,7 +18,7 @@ def app_path():
 # 导入config库
 config = con.ConfigParser()
 
-#读取目录下的config
+# 读取目录下的config
 curPath = os.path.dirname(os.path.realpath(__file__))
 path = os.path.join(curPath, r'config.ini')
 config.read(filenames=path, encoding='utf-8')
@@ -60,27 +60,35 @@ targetHour = int(config['section']['targetHour'])
 showSeconds = eval(config['section']['showSeconds'])
 showExitButton = eval(config['section']['showExitButton'])
 showMessage = eval(config['section']['showMessage'])
+n = config['section']['n']
+message = str(config['section']['message'])
+message = message.replace(n, '\n')
+wordWithSecond = config['section']['wordWithSecond']
+wordWithSecond = wordWithSecond.replace(n, '\n')
+wordWithoutSecond = config['section']['wordWithoutSecond']
+wordWithoutSecond = wordWithoutSecond.replace(n, '\n')
 tD = datetime(year=targetYear, month=targetMonth, day=targetDay, hour=targetHour) - datetime.today()
 tD = str(tD.days)
 
-#建立窗口
+# 建立窗口
 window = Tk()
 outputText = StringVar()
 
 
 # 时间计算
 def showtime():
-    tM = 60 - datetime.today().minute
-    tS = 60 - datetime.today().second
+    tM = 59 - datetime.today().minute
+    tS = 59 - datetime.today().second
     if datetime.today().hour > 8:
         tH = 24 - datetime.today().hour + 8
     else:
         tH = 8 - datetime.today().hour
     if showSeconds:
-        outputText.set("距离中考\n还有\n{}\n天\n{}时{}分{}秒".format(tD, str(tH), str(tM), str(tS)))
+        outputText.set(wordWithSecond.format(tD, str(tH), str(tM), str(tS)))
         window.after(1000, showtime)
     else:
-        outputText.set("距离中考\n还有\n{}\n天".format(tD))
+        outputText.set(wordWithoutSecond.format(tD))
+        window.after(1000, showtime)
 
 
 # 显示文字
@@ -91,19 +99,15 @@ window.overrideredirect(True)
 window.wm_attributes('-topmost', False)
 window.geometry(screenSize)
 
-
 if showMessage:
-    messagebox.showinfo(title='信息', message="本软件由樱花落制作\n全部代码已经在github上开源")
-
+    messagebox.showinfo(title='!', message=message)
 
 window.bind('<Button-1>', SaveLastClickPos)
 window.bind('<B1-Motion>', Dragging)
 lb = Label(window, textvariable=outputText, font=(wordStyle, wordSize), bg='white', fg='#FFFFF0')
 lb.pack()
 
-
 if showExitButton:
     Button(window, text='退出', command=tick, font=(buttonWordStyle, buttonWordSize)).pack()
-
 
 window.mainloop()
